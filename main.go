@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/user"
+	"strings"
 	"time"
 
 	"github.com/apcera/termtables"
@@ -15,7 +16,6 @@ import (
 	"github.com/ttacon/chalk"
 )
 
-// TODO: case insensitive search
 // TODO: chalk sucks and doesn't check if the output is a terminal
 
 func main() {
@@ -137,7 +137,7 @@ func cmdList() {
 	dbw := NewDBWrapper()
 	servers, err := dbw.AllServers()
 	handleError(err)
-	renderServers(servers)
+	renderServers(servers, "")
 }
 
 func cmdDelete(alias string) {
@@ -150,7 +150,7 @@ func cmdSearch(search string) {
 	dbw := NewDBWrapper()
 	servers, err := dbw.ServerSearch(search)
 	handleError(err)
-	renderServers(servers)
+	renderServers(servers, search)
 }
 
 func cmdNote(alias string) {
@@ -209,7 +209,7 @@ func cmdSSH(alias string) {
 	s.ssh()
 }
 
-func renderServers(servers []Server) {
+func renderServers(servers []Server, highlight string) {
 	if len(servers) == 0 {
 		handleError(errors.New("No servers found."))
 	}
@@ -217,6 +217,10 @@ func renderServers(servers []Server) {
 	t := termtables.CreateTable()
 	t.AddHeaders("Alias", "Hostname", "Hits")
 	for _, s := range servers {
+		if highlight != "" {
+			s.Alias = strings.Replace(s.Alias, highlight, fmt.Sprintf("%s%s%s", chalk.Green, highlight, chalk.Reset), 1)
+			s.Hostname = strings.Replace(s.Hostname, highlight, fmt.Sprintf("%s%s%s", chalk.Green, highlight, chalk.Reset), 1)
+		}
 		t.AddRow(s.Alias, s.Hostname, s.Hit)
 	}
 	fmt.Printf(t.Render())

@@ -3,14 +3,12 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"os"
 	"os/user"
 	"strings"
 	"time"
 
 	"github.com/boltdb/bolt"
-	"github.com/ttacon/chalk"
 )
 
 // newBoltDB ...
@@ -87,10 +85,12 @@ func (dbw DBWrapper) ServerSearch(search string) (servers []Server, err error) {
 			err := json.Unmarshal(host, &s)
 			handleError(err)
 
-			// TODO: move color into cmdSSH. breaks other searches
-			if strings.Contains(string(alias), search) || strings.Contains(s.Hostname, search) || strings.Contains(s.Notes, search) {
-				s.Alias = strings.Replace(string(alias), search, fmt.Sprintf("%s%s%s", chalk.Yellow, search, chalk.Reset), 1)
-				s.Hostname = strings.Replace(s.Hostname, search, fmt.Sprintf("%s%s%s", chalk.Yellow, search, chalk.Reset), 1)
+			searchL := strings.ToLower(search)
+			aliasL := strings.ToLower(string(alias))
+			hostL := strings.ToLower(s.Hostname)
+			notesL := strings.ToLower(s.Notes)
+
+			if strings.Contains(aliasL, searchL) || strings.Contains(hostL, searchL) || strings.Contains(notesL, searchL) {
 				servers = append(servers, s)
 			}
 		}
