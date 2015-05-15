@@ -17,7 +17,8 @@ type Server struct {
 
 func (s Server) ssh() {
 	if s.Notes != "" {
-		fmt.Printf(s.Notes)
+		renderNotes(s)
+		//fmt.Printf(s.Notes)
 	}
 
 	success := s.sshStartProcess(s.Hostname)

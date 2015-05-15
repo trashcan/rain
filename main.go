@@ -201,3 +201,8 @@ func renderServers(servers []Server, highlight string) {
 	}
 	fmt.Printf(t.Render())
 }
+
+func renderNotes(s Server) {
+	fmt.Printf("%s * Notes for %s%s\n\n", chalk.Green, s.Alias, chalk.Reset)
+	fmt.Println(s.Notes)
+}
