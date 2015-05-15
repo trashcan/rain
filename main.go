@@ -2,14 +2,12 @@ package main
 
 import (
 	"bufio"
-	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"os/user"
-	"strings"
 	"time"
 
 	"github.com/apcera/termtables"
@@ -17,7 +15,6 @@ import (
 	"github.com/ttacon/chalk"
 )
 
-// TODO: getDB should only be called once
 // TODO: case insensitive search
 // TODO: chalk sucks and doesn't check if the output is a terminal
 
@@ -39,8 +36,14 @@ func usage() {
 
 func handleError(m error) {
 	if m != nil {
-		fmt.Printf("%s%s%s", chalk.Red, m.Error(), chalk.Reset)
+		fmt.Printf("%s%s%s\n", chalk.Red, m.Error(), chalk.Reset)
 		os.Exit(1)
+	}
+}
+
+func handleWarning(m error) {
+	if m != nil {
+		fmt.Printf("%s%s%s\n", chalk.Yellow, m.Error(), chalk.Reset)
 	}
 }
 
@@ -119,124 +122,53 @@ func cmdAdd() {
 		hostname = scanner.Text()
 	}
 
-	newServer := &Server{
+	newServer := Server{
 		Alias:    alias,
 		Hostname: hostname,
 		Notes:    string(""),
 	}
 
-	newServer.save()
-}
-
-func cmdList() {
-	table := termtables.CreateTable()
-	table.AddHeaders("Alias", "Hostname")
-
-	db := getDB()
-
-	var rows []interface{}
-
-	err := db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("servers"))
-		c := b.Cursor()
-
-		for k, v := c.First(); k != nil; k, v = c.Next() {
-			rows = append(rows, "test")
-			var s Server
-			err := json.Unmarshal(v, &s)
-			handleError(err)
-			table.AddRow(s.Alias, s.Hostname)
-		}
-
-		fmt.Printf(table.Render())
-		return nil
-	})
+	dbw := NewDBWrapper()
+	err := dbw.AddServer(newServer)
 	handleError(err)
 }
 
+func cmdList() {
+	dbw := NewDBWrapper()
+	servers, err := dbw.AllServers()
+	handleError(err)
+	renderServers(servers)
+}
+
 func cmdDelete(alias string) {
-	db := getDB()
-	err := db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("servers"))
-		//TODO: check if key exists first
-		err := b.Delete([]byte(alias))
-		return err
-	})
+	dbw := NewDBWrapper()
+	err := dbw.DeleteServer(alias)
 	handleError(err)
 }
 
 func cmdSearch(search string) {
-	db := getDB()
-
-	db.View(func(tx *bolt.Tx) error {
-		table := termtables.CreateTable()
-		table.AddHeaders("Alias", "Hostname")
-
-		b := tx.Bucket([]byte("servers"))
-		cursor := b.Cursor()
-		match := false
-		for alias, host := cursor.First(); alias != nil; alias, host = cursor.Next() {
-			var s Server
-			err := json.Unmarshal(host, &s)
-			handleError(err)
-
-			if strings.Contains(string(alias), search) || strings.Contains(s.Hostname, search) || strings.Contains(s.Notes, search) {
-				s.Alias = strings.Replace(string(alias), search, fmt.Sprintf("%s%s%s", chalk.Yellow, search, chalk.Reset), 1)
-				s.Hostname = strings.Replace(s.Hostname, search, fmt.Sprintf("%s%s%s", chalk.Yellow, search, chalk.Reset), 1)
-				table.AddRow(s.Alias, s.Hostname)
-				match = true
-			}
-
-		}
-		if match {
-			fmt.Println(table.Render())
-		} else {
-			fmt.Println("No matches.")
-		}
-		return nil
-	})
+	dbw := NewDBWrapper()
+	servers, err := dbw.ServerSearch(search)
+	handleError(err)
+	renderServers(servers)
 }
 
 func cmdNote(alias string) {
-	db := getDB()
+	dbw := NewDBWrapper()
+	s, err := dbw.GetServer(alias)
+	handleError(err)
 
-	db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("servers"))
-		j := b.Get([]byte(alias))
-		if j == nil {
-			return errors.New("alias " + alias + " not found.")
-		}
-
-		var s Server
-		err := json.Unmarshal(j, &s)
-		if err != nil {
-			panic(err)
-		}
-
-		newNote := openEditor(s.Notes)
-
-		if s.Notes != string(newNote) {
-			s.Notes = newNote
-			encoded, err := json.Marshal(s)
-			handleError(err)
-
-			err = b.Put([]byte(alias), encoded)
-			handleError(err)
-
-			// Can't nest this
-			//s.save()
-		}
-
-		return nil
-	})
-
+	newNote := openEditor(s.Notes)
+	if s.Notes != string(newNote) {
+		s.Notes = newNote
+		err = dbw.UpdateServer(s)
+		handleError(err)
+	}
 }
 
 func openEditor(notes string) (newNote string) {
 	file, err := ioutil.TempFile(os.TempDir(), "rain")
-	if err != nil {
-		panic(err)
-	}
+	handleError(err)
 	defer os.Remove(file.Name())
 
 	err = ioutil.WriteFile(file.Name(), []byte(notes), 0644)
@@ -249,7 +181,6 @@ func openEditor(notes string) (newNote string) {
 		Files: []*os.File{os.Stdin, os.Stdout, os.Stderr},
 		Dir:   cwd,
 	}
-
 	// TODO: use path
 	proc, err := os.StartProcess("/usr/local/bin/vim", []string{"", file.Name()}, &pa)
 	handleError(err)
@@ -263,22 +194,30 @@ func openEditor(notes string) (newNote string) {
 	return string(newNoteByte)
 }
 
-func cmdSSH(hostname string) {
-	db := getDB()
-	err := db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("servers"))
-		host := b.Get([]byte(hostname))
+// TODO: search if alias not found
+func cmdSSH(alias string) {
+	dbw := NewDBWrapper()
+	s, err := dbw.GetServer(alias)
+	handleWarning(err)
+	if err != nil {
+		s = Server{Hostname: alias}
+		err = nil
+	} else {
+		s.Hit++
+		dbw.UpdateServer(s)
+	}
+	s.ssh()
+}
 
-		var s Server
-		if host != nil {
-			err := json.Unmarshal(host, &s)
-			handleError(err)
-		} else {
-			s.Hostname = hostname
-		}
+func renderServers(servers []Server) {
+	if len(servers) == 0 {
+		handleError(errors.New("No servers found."))
+	}
 
-		s.ssh()
-		return nil
-	})
-	handleError(err)
+	t := termtables.CreateTable()
+	t.AddHeaders("Alias", "Hostname", "Hits")
+	for _, s := range servers {
+		t.AddRow(s.Alias, s.Hostname, s.Hit)
+	}
+	fmt.Printf(t.Render())
 }
