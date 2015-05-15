@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"strings"
 
 	"github.com/apcera/termtables"
@@ -14,6 +15,7 @@ import (
 )
 
 // TODO: chalk sucks and doesn't check if the output is a terminal
+// TODO: support ssh options like user, port
 
 func main() {
 	termtables.EnableUTF8PerLocale()
@@ -51,7 +53,7 @@ func parseArgs() {
 	switch args[0] {
 
 	case "ssh":
-		requireArgs("search", 2)
+		requireArgs("ssh", 2)
 		cmdSSH(args[1])
 	case "list":
 		cmdList()
@@ -64,7 +66,7 @@ func parseArgs() {
 		requireArgs("search", 2)
 		cmdSearch(args[1])
 	case "note":
-		requireArgs("search", 2)
+		requireArgs("note", 2)
 		cmdNote(args[1])
 	case "help":
 		flag.Usage()
@@ -76,7 +78,6 @@ func parseArgs() {
 
 func requireArgs(cmd string, count int) {
 	args := os.Args[1:]
-
 	if len(args) < count {
 		flag.Usage()
 		handleError(fmt.Errorf("%s requires more argument(s).\n", cmd))
@@ -157,8 +158,10 @@ func openEditor(notes string) (newNote string) {
 		Files: []*os.File{os.Stdin, os.Stdout, os.Stderr},
 		Dir:   cwd,
 	}
-	// TODO: use path
-	proc, err := os.StartProcess("/usr/local/bin/vim", []string{"", file.Name()}, &pa)
+	vim, err := exec.LookPath("vim")
+	handleError(err)
+
+	proc, err := os.StartProcess(vim, []string{"", file.Name()}, &pa)
 	handleError(err)
 
 	_, err = proc.Wait()
@@ -170,14 +173,26 @@ func openEditor(notes string) (newNote string) {
 	return string(newNoteByte)
 }
 
-// TODO: search if alias not found
 func cmdSSH(alias string) {
 	dbw := NewDBWrapper()
 	s, err := dbw.GetServer(alias)
-	handleWarning(err)
 	if err != nil {
-		s = Server{Hostname: alias}
-		err = nil
+		search, _ := dbw.ServerSearch(alias)
+		if len(search) == 0 {
+			// Just ssh to the provided hostname.
+			handleWarning(err)
+			s = Server{Hostname: alias}
+		} else if len(search) == 1 {
+			// If there's one search result, ssh to it.
+			handleWarning(errors.New("Matched one result, going to " + search[0].Hostname + "."))
+			s = search[0]
+			s.Hit++
+			dbw.UpdateServer(s)
+		} else {
+			// Otherwise, list the search results and quit.
+			renderServers(search, alias)
+			return
+		}
 	} else {
 		s.Hit++
 		dbw.UpdateServer(s)
@@ -203,6 +218,6 @@ func renderServers(servers []Server, highlight string) {
 }
 
 func renderNotes(s Server) {
-	fmt.Printf("%s * Notes for %s%s\n\n", chalk.Green, s.Alias, chalk.Reset)
+	fmt.Printf("%s* %s Notes for %s\n\n", chalk.Green, chalk.Reset, s.Alias)
 	fmt.Println(s.Notes)
 }
