@@ -7,12 +7,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"os/user"
 	"strings"
-	"time"
 
 	"github.com/apcera/termtables"
-	"github.com/boltdb/bolt"
 	"github.com/ttacon/chalk"
 )
 
@@ -84,27 +81,6 @@ func requireArgs(cmd string, count int) {
 		flag.Usage()
 		handleError(fmt.Errorf("%s requires more argument(s).\n", cmd))
 	}
-}
-
-func getDB() (db *bolt.DB) {
-	usr, err := user.Current()
-	handleError(err)
-
-	dbpath := usr.HomeDir + "/.rain"
-	err = os.MkdirAll(dbpath, 0755)
-	handleError(err)
-
-	fullpath := dbpath + "/bolt.db"
-	db, err = bolt.Open(fullpath, 0600, &bolt.Options{Timeout: 1 * time.Second})
-	handleError(err)
-
-	db.Update(func(tx *bolt.Tx) error {
-		_, err := tx.CreateBucketIfNotExists([]byte("servers"))
-		handleError(err)
-		return err
-	})
-
-	return db
 }
 
 func cmdAdd() {
