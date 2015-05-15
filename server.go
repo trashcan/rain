@@ -12,8 +12,7 @@ type Server struct {
 	Hostname string
 	Notes    string
 	Tags     []string
-	//TODO: Increment this. Also sort search results by it maybe.
-	Hit int
+	Hit      int
 }
 
 func (s Server) ssh() {
