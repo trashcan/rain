@@ -18,8 +18,8 @@ import (
 )
 
 // TODO: getDB should only be called once
-// TODO: it shoudl be possible to add an entry automatically for testing
 // TODO: case insensitive search
+// TODO: chalk sucks and doesn't check if the output is a terminal
 
 func main() {
 	termtables.EnableUTF8PerLocale()
@@ -31,7 +31,7 @@ func usage() {
 	fmt.Println("Usage:")
 	fmt.Printf("\t%s ssh <alias>: ssh to server by alias\n", os.Args[0])
 	fmt.Printf("\t%s list: list all known servers\n", os.Args[0])
-	fmt.Printf("\t%s add: add a new server\n", os.Args[0])
+	fmt.Printf("\t%s add [alias] [hostname]: add a new server\n", os.Args[0])
 	fmt.Printf("\t%s delete <alias>: delete server\n", os.Args[0])
 	fmt.Printf("\t%s note <alias>: edit the notes of an existing server by alias\n", os.Args[0])
 	fmt.Printf("\t%s help: print this message\n\n", os.Args[0])
@@ -56,7 +56,6 @@ func parseArgs() {
 	case "list":
 		cmdList()
 	case "add":
-		//TODO: allow specifying alias + hostname as arguments
 		cmdAdd()
 	case "delete":
 		requireArgs("delete", 2)
@@ -106,15 +105,19 @@ func getDB() (db *bolt.DB) {
 }
 
 func cmdAdd() {
-	scanner := bufio.NewScanner(os.Stdin)
-
-	fmt.Print("Alias: ")
-	scanner.Scan()
-	alias := scanner.Text()
-
-	fmt.Print("Hostname/IP: ")
-	scanner.Scan()
-	hostname := scanner.Text()
+	var alias, hostname string
+	if len(os.Args) == 4 {
+		alias = os.Args[2]
+		hostname = os.Args[3]
+	} else {
+		scanner := bufio.NewScanner(os.Stdin)
+		fmt.Print("Alias: ")
+		scanner.Scan()
+		alias = scanner.Text()
+		fmt.Print("Hostname/IP: ")
+		scanner.Scan()
+		hostname = scanner.Text()
+	}
 
 	newServer := &Server{
 		Alias:    alias,
@@ -180,8 +183,6 @@ func cmdSearch(search string) {
 			if strings.Contains(string(alias), search) || strings.Contains(s.Hostname, search) || strings.Contains(s.Notes, search) {
 				s.Alias = strings.Replace(string(alias), search, fmt.Sprintf("%s%s%s", chalk.Yellow, search, chalk.Reset), 1)
 				s.Hostname = strings.Replace(s.Hostname, search, fmt.Sprintf("%s%s%s", chalk.Yellow, search, chalk.Reset), 1)
-
-				//strings.Replace
 				table.AddRow(s.Alias, s.Hostname)
 				match = true
 			}
