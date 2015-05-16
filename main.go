@@ -24,25 +24,25 @@ func main() {
 }
 
 func usage() {
-	fmt.Println("Usage:")
-	fmt.Printf("\t%s ssh <alias>: ssh to server by alias\n", os.Args[0])
-	fmt.Printf("\t%s list: list all known servers\n", os.Args[0])
-	fmt.Printf("\t%s add [alias] [hostname]: add a new server\n", os.Args[0])
-	fmt.Printf("\t%s delete <alias>: delete server\n", os.Args[0])
-	fmt.Printf("\t%s note <alias>: edit the notes of an existing server by alias\n", os.Args[0])
-	fmt.Printf("\t%s help: print this message\n\n", os.Args[0])
+	fmt.Println("☔")
+	fmt.Printf("%s ssh <alias>: ssh to server by alias\n", os.Args[0])
+	fmt.Printf("%s list: list all known servers\n", os.Args[0])
+	fmt.Printf("%s add [alias] [hostname]: add a new server\n", os.Args[0])
+	fmt.Printf("%s delete <alias>: delete server\n", os.Args[0])
+	fmt.Printf("%s note <alias>: edit the notes of an existing server by alias\n", os.Args[0])
+	fmt.Printf("%s help: print this message\n\n", os.Args[0])
 }
 
 func handleError(m error) {
 	if m != nil {
-		fmt.Printf("%s%s%s\n", chalk.Red, m.Error(), chalk.Reset)
+		fmt.Printf("☔\t%s%s%s\n", chalk.Red, m.Error(), chalk.Reset)
 		os.Exit(1)
 	}
 }
 
 func handleWarning(m error) {
 	if m != nil {
-		fmt.Printf("%s%s%s\n", chalk.Yellow, m.Error(), chalk.Reset)
+		fmt.Printf("☔\t%s%s%s\n", chalk.Yellow, m.Error(), chalk.Reset)
 	}
 }
 
@@ -218,6 +218,6 @@ func renderServers(servers []Server, highlight string) {
 }
 
 func renderNotes(s Server) {
-	fmt.Printf("%s* %s Notes for %s\n\n", chalk.Green, chalk.Reset, s.Alias)
+	fmt.Printf("☔\t%sNotes for %s%s\n\n", chalk.Green, s.Alias, chalk.Reset)
 	fmt.Println(s.Notes)
 }
