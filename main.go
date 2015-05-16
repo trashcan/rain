@@ -14,8 +14,8 @@ import (
 	"github.com/ttacon/chalk"
 )
 
-// TODO: chalk sucks and doesn't check if the output is a terminal
-// TODO: support ssh options like user, port
+// TODO: chalk doesn't check if the output is a terminal and breaks less
+// TODO: support ssh options like port: user@port:22
 
 func main() {
 	termtables.EnableUTF8PerLocale()
@@ -27,7 +27,7 @@ func usage() {
 	fmt.Println("☔")
 	fmt.Printf("%s ssh <alias>: ssh to server by alias\n", os.Args[0])
 	fmt.Printf("%s list: list all known servers\n", os.Args[0])
-	fmt.Printf("%s add [alias] [hostname]: add a new server\n", os.Args[0])
+	fmt.Printf("%s add [alias] [user@][hostname]: add a new server\n", os.Args[0])
 	fmt.Printf("%s delete <alias>: delete server\n", os.Args[0])
 	fmt.Printf("%s note <alias>: edit the notes of an existing server by alias\n", os.Args[0])
 	fmt.Printf("%s help: print this message\n\n", os.Args[0])
@@ -105,33 +105,33 @@ func cmdAdd() {
 		Notes:    string(""),
 	}
 
-	dbw := NewDBWrapper()
+	dbw := DBWrapper{}
 	err := dbw.AddServer(newServer)
 	handleError(err)
 }
 
 func cmdList() {
-	dbw := NewDBWrapper()
+	dbw := DBWrapper{}
 	servers, err := dbw.AllServers()
 	handleError(err)
 	renderServers(servers, "")
 }
 
 func cmdDelete(alias string) {
-	dbw := NewDBWrapper()
+	dbw := DBWrapper{}
 	err := dbw.DeleteServer(alias)
 	handleError(err)
 }
 
 func cmdSearch(search string) {
-	dbw := NewDBWrapper()
+	dbw := DBWrapper{}
 	servers, err := dbw.ServerSearch(search)
 	handleError(err)
 	renderServers(servers, search)
 }
 
 func cmdNote(alias string) {
-	dbw := NewDBWrapper()
+	dbw := DBWrapper{}
 	s, err := dbw.GetServer(alias)
 	handleError(err)
 
@@ -174,7 +174,7 @@ func openEditor(notes string) (newNote string) {
 }
 
 func cmdSSH(alias string) {
-	dbw := NewDBWrapper()
+	dbw := DBWrapper{}
 	s, err := dbw.GetServer(alias)
 	if err != nil {
 		search, _ := dbw.ServerSearch(alias)
@@ -194,6 +194,7 @@ func cmdSSH(alias string) {
 			return
 		}
 	} else {
+		fmt.Printf("☔\tConnecting to %s.\n", s.Hostname)
 		s.Hit++
 		dbw.UpdateServer(s)
 	}

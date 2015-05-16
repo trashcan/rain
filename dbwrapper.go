@@ -12,7 +12,7 @@ import (
 )
 
 // newBoltDB ...
-func newBoltDB() (db *bolt.DB) {
+func (dbw DBWrapper) connect() (db *bolt.DB) {
 	usr, err := user.Current()
 	handleError(err)
 
@@ -29,6 +29,7 @@ func newBoltDB() (db *bolt.DB) {
 		handleError(err)
 		return err
 	})
+
 	handleError(err)
 
 	return db
@@ -36,19 +37,14 @@ func newBoltDB() (db *bolt.DB) {
 
 // DBWrapper ...
 type DBWrapper struct {
-	db *bolt.DB
-}
-
-//NewDBWrapper ..
-func NewDBWrapper() (dbw DBWrapper) {
-	bdb := newBoltDB()
-	dbw = DBWrapper{db: bdb}
-	return
 }
 
 // DeleteServer ...
 func (dbw DBWrapper) DeleteServer(alias string) (err error) {
-	err = dbw.db.Update(func(tx *bolt.Tx) error {
+	bdb := dbw.connect()
+	defer bdb.Close()
+
+	err = bdb.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("servers"))
 		//TODO: check if key exists first
 		err := b.Delete([]byte(alias))
@@ -60,7 +56,10 @@ func (dbw DBWrapper) DeleteServer(alias string) (err error) {
 
 // AddServer ...
 func (dbw DBWrapper) AddServer(s Server) (err error) {
-	err = dbw.db.Update(func(tx *bolt.Tx) error {
+	bdb := dbw.connect()
+	defer bdb.Close()
+
+	err = bdb.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("servers"))
 		handleError(err)
 
@@ -70,13 +69,17 @@ func (dbw DBWrapper) AddServer(s Server) (err error) {
 		err = b.Put([]byte(s.Alias), encoded)
 		return err
 	})
+
 	handleError(err)
 	return
 }
 
 // ServerSearch ...
 func (dbw DBWrapper) ServerSearch(search string) (servers []Server, err error) {
-	err = dbw.db.View(func(tx *bolt.Tx) error {
+	bdb := dbw.connect()
+	defer bdb.Close()
+
+	err = bdb.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("servers"))
 		cursor := b.Cursor()
 
@@ -101,7 +104,10 @@ func (dbw DBWrapper) ServerSearch(search string) (servers []Server, err error) {
 
 // AllServers ...  TODO merge with search?
 func (dbw DBWrapper) AllServers() (servers []Server, err error) {
-	err = dbw.db.View(func(tx *bolt.Tx) error {
+	bdb := dbw.connect()
+	defer bdb.Close()
+
+	err = bdb.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("servers"))
 		c := b.Cursor()
 
@@ -119,7 +125,10 @@ func (dbw DBWrapper) AllServers() (servers []Server, err error) {
 
 // GetServer ...
 func (dbw DBWrapper) GetServer(alias string) (s Server, err error) {
-	err = dbw.db.View(func(tx *bolt.Tx) error {
+	bdb := dbw.connect()
+	defer bdb.Close()
+
+	err = bdb.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("servers"))
 
 		encoded := b.Get([]byte(alias))

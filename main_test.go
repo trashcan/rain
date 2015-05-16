@@ -7,7 +7,7 @@ import (
 
 func TestDB(t *testing.T) {
 	s := Server{Alias: "myalias", Hostname: "myhostname", Notes: "mynotes"}
-	dbw := NewDBWrapper()
+	dbw := DBWrapper{}
 
 	fmt.Println("Testing adding a server.")
 	err := dbw.AddServer(s)
@@ -55,7 +55,7 @@ func TestDB(t *testing.T) {
 	if err != nil {
 		t.Errorf("Failed to remove a server from DB. err: %s\n", err.Error())
 	}
-    fmt.Println("Done")
+	fmt.Println("Done")
 }
 
 func compareServers(a, b Server) bool {
