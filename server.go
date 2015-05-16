@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"time"
 )
 
@@ -18,7 +19,6 @@ type Server struct {
 func (s Server) ssh() {
 	if s.Notes != "" {
 		renderNotes(s)
-		//fmt.Printf(s.Notes)
 	}
 
 	success := s.sshStartProcess(s.Hostname)
@@ -38,7 +38,10 @@ func (s Server) sshStartProcess(hostname string) (success bool) {
 		Dir:   cwd,
 	}
 
-	proc, err := os.StartProcess("/usr/bin/ssh", []string{"-v", s.Hostname}, &pa)
+	ssh, err := exec.LookPath("ssh")
+	handleError(err)
+
+	proc, err := os.StartProcess(ssh, []string{"-v", s.Hostname}, &pa)
 	handleError(err)
 
 	state, err := proc.Wait()
