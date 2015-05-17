@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
 )
 
@@ -14,6 +15,7 @@ type Server struct {
 	Notes    string
 	Tags     []string
 	Hit      int
+	port     string
 }
 
 func (s Server) ssh() {
@@ -21,15 +23,23 @@ func (s Server) ssh() {
 		renderNotes(s)
 	}
 
-	success := s.sshStartProcess(s.Hostname)
+	// TODO: this parsing should probably be done at time of server add.
+	s.port = "22"
+	if strings.Contains(s.Hostname, ":") {
+		p := strings.Split(s.Hostname, ":")
+		s.Hostname = p[0]
+		s.port = p[1]
+	}
+
+	success := s.sshStartProcess()
 	for success == false {
 		fmt.Println("Unusual termination, reconnecting (or the last ran command did not return 0).")
-		time.Sleep(1000 * time.Millisecond)
-		success = s.sshStartProcess(s.Hostname)
+		time.Sleep(3000 * time.Millisecond)
+		success = s.sshStartProcess()
 	}
 }
 
-func (s Server) sshStartProcess(hostname string) (success bool) {
+func (s Server) sshStartProcess() (success bool) {
 	cwd, err := os.Getwd()
 	handleError(err)
 
@@ -41,7 +51,8 @@ func (s Server) sshStartProcess(hostname string) (success bool) {
 	ssh, err := exec.LookPath("ssh")
 	handleError(err)
 
-	proc, err := os.StartProcess(ssh, []string{"-v", s.Hostname}, &pa)
+	args := []string{"", "-p " + s.port, s.Hostname}
+	proc, err := os.StartProcess(ssh, args, &pa)
 	handleError(err)
 
 	state, err := proc.Wait()
@@ -53,7 +64,7 @@ func (s Server) sshStartProcess(hostname string) (success bool) {
 	if state.String() == "exit status 127" || state.String() == "exit status 130" {
 		return true
 	} else if !state.Success() {
-		fmt.Printf("WARNING: %s. If this should not cause a reconnect email plathem@gmail.com.\n", state.String())
+		fmt.Printf("WARNING: %s. \n", state.String())
 	}
 
 	return state.Success()

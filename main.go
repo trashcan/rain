@@ -27,7 +27,7 @@ func usage() {
 	fmt.Println("☔")
 	fmt.Printf("%s ssh <alias>: ssh to server by alias\n", os.Args[0])
 	fmt.Printf("%s list: list all known servers\n", os.Args[0])
-	fmt.Printf("%s add [alias] [user@][hostname]: add a new server\n", os.Args[0])
+	fmt.Printf("%s add [alias] [root@][hostname][:22]: add a new server\n", os.Args[0])
 	fmt.Printf("%s delete <alias>: delete server\n", os.Args[0])
 	fmt.Printf("%s note <alias>: edit the notes of an existing server by alias\n", os.Args[0])
 	fmt.Printf("%s help: print this message\n\n", os.Args[0])
