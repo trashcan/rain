@@ -55,7 +55,6 @@ func TestDB(t *testing.T) {
 	if err != nil {
 		t.Errorf("Failed to remove a server from DB. err: %s\n", err.Error())
 	}
-	fmt.Println("Done")
 }
 
 func compareServers(a, b Server) bool {

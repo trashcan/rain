@@ -33,7 +33,7 @@ func (s Server) ssh() {
 
 	success := s.sshStartProcess()
 	for success == false {
-		fmt.Println("Unusual termination, reconnecting (or the last ran command did not return 0).")
+		fmt.Println("Unusual termination, reconnecting.")
 		time.Sleep(3000 * time.Millisecond)
 		success = s.sshStartProcess()
 	}
@@ -63,9 +63,9 @@ func (s Server) sshStartProcess() (success bool) {
 	// TODO: is there not a way to get the return code as an int?
 	if state.String() == "exit status 127" || state.String() == "exit status 130" {
 		return true
-	} else if !state.Success() {
+	} /*else if !state.Success() {
 		fmt.Printf("WARNING: %s. \n", state.String())
-	}
+	}*/
 
 	return state.Success()
 }

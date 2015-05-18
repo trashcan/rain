@@ -14,23 +14,28 @@ import (
 	"github.com/ttacon/chalk"
 )
 
-// TODO: chalk doesn't check if the output is a terminal and breaks less
-// TODO: support ssh options like port: user@port:22
+// TODO: chalk doesn't check if the output supports color
+// TODO: (more correctly) support ssh options like port: user@port:22
+// TODO: parse and filter ssh -v to see when we are connected for slow logins.
 
 func main() {
-	termtables.EnableUTF8PerLocale()
 	flag.Usage = usage
 	parseArgs()
 }
 
 func usage() {
-	fmt.Println("☔")
-	fmt.Printf("%s ssh <alias>: ssh to server by alias\n", os.Args[0])
-	fmt.Printf("%s list: list all known servers\n", os.Args[0])
-	fmt.Printf("%s add [alias] [root@][hostname][:22]: add a new server\n", os.Args[0])
-	fmt.Printf("%s delete <alias>: delete server\n", os.Args[0])
-	fmt.Printf("%s note <alias>: edit the notes of an existing server by alias\n", os.Args[0])
-	fmt.Printf("%s help: print this message\n\n", os.Args[0])
+	fmt.Println("☔  ./rain <command> [options]")
+	fmt.Println()
+
+	fmt.Println("Commands:")
+	fmt.Println("  list")
+	fmt.Println("  ssh <alias>")
+	fmt.Println("  add [alias] [root@][hostname][:22]")
+	fmt.Println("  note <alias>")
+	fmt.Println("  delete <alias>")
+	fmt.Println("  help")
+	fmt.Println()
+	fmt.Println("Report bugs at http://gitrex.com/patl/rain/issues.")
 }
 
 func handleError(m error) {
@@ -71,8 +76,8 @@ func parseArgs() {
 	case "help":
 		flag.Usage()
 	default:
-		fmt.Println("Unknown subcommand:", os.Args[1])
 		flag.Usage()
+		handleError(fmt.Errorf("unknown subcommand: %s", os.Args[1]))
 	}
 }
 
@@ -94,7 +99,7 @@ func cmdAdd() {
 		fmt.Print("Alias: ")
 		scanner.Scan()
 		alias = scanner.Text()
-		fmt.Print("Hostname/IP: ")
+		fmt.Print("Hostname ([user]@<hostname>:[port]): ")
 		scanner.Scan()
 		hostname = scanner.Text()
 	}
@@ -206,8 +211,19 @@ func renderServers(servers []Server, highlight string) {
 		handleError(errors.New("No servers found."))
 	}
 
+	var ts = &termtables.TableStyle{
+		SkipBorder: true,
+		BorderX:    "", BorderY: "", BorderI: "",
+		PaddingLeft: 0, PaddingRight: 4,
+		Width:     80,
+		Alignment: termtables.AlignLeft,
+	}
+
 	t := termtables.CreateTable()
-	t.AddHeaders("Alias", "Hostname", "Hits")
+	t.Style = ts
+	// TODO FIXME: These are adding a blank line above the headers.
+	// t.AddHeaders("Alias", "Hostname", "Hits")
+	t.AddRow("Alias", "Hostname", "Hits")
 	for _, s := range servers {
 		if highlight != "" {
 			s.Alias = strings.Replace(s.Alias, highlight, fmt.Sprintf("%s%s%s", chalk.Green, highlight, chalk.Reset), 1)
@@ -216,6 +232,7 @@ func renderServers(servers []Server, highlight string) {
 		t.AddRow(s.Alias, s.Hostname, s.Hit)
 	}
 	fmt.Printf(t.Render())
+
 }
 
 func renderNotes(s Server) {
