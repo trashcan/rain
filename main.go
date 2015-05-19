@@ -35,7 +35,7 @@ func usage() {
 	fmt.Println("  delete <alias>")
 	fmt.Println("  help")
 	fmt.Println()
-	fmt.Println("Report bugs at http://gitrex.com/patl/rain/issues.")
+	fmt.Println("Report bugs at http://github.com/trashcan/rain/issues.")
 }
 
 func handleError(m error) {
@@ -49,6 +49,10 @@ func handleWarning(m error) {
 	if m != nil {
 		fmt.Printf("☔\t%s%s%s\n", chalk.Yellow, m.Error(), chalk.Reset)
 	}
+}
+
+func handleStatus(m string) {
+	fmt.Printf("☔\t%s%s%s\n", chalk.Green, m, chalk.Reset)
 }
 
 func parseArgs() {
@@ -71,6 +75,9 @@ func parseArgs() {
 		requireArgs("search", 2)
 		cmdSearch(args[1])
 	case "note":
+		requireArgs("note", 2)
+		cmdNote(args[1])
+	case "edit":
 		requireArgs("note", 2)
 		cmdNote(args[1])
 	case "help":
@@ -199,7 +206,8 @@ func cmdSSH(alias string) {
 			return
 		}
 	} else {
-		fmt.Printf("☔\tConnecting to %s.\n", s.Hostname)
+		//fmt.Printf("☔\tConnecting to %s.\n", s.Hostname)
+		handleStatus(fmt.Sprintf("Connecting to %s.", s.Hostname))
 		s.Hit++
 		dbw.UpdateServer(s)
 	}
@@ -223,7 +231,9 @@ func renderServers(servers []Server, highlight string) {
 	t.Style = ts
 	// TODO FIXME: These are adding a blank line above the headers.
 	// t.AddHeaders("Alias", "Hostname", "Hits")
-	t.AddRow("Alias", "Hostname", "Hits")
+	cb := chalk.Bold.TextStyle
+
+	t.AddRow(cb("Alias"), cb("Hostname"), cb("Hits"))
 	for _, s := range servers {
 		if highlight != "" {
 			s.Alias = strings.Replace(s.Alias, highlight, fmt.Sprintf("%s%s%s", chalk.Green, highlight, chalk.Reset), 1)
@@ -236,6 +246,7 @@ func renderServers(servers []Server, highlight string) {
 }
 
 func renderNotes(s Server) {
-	fmt.Printf("☔\t%sNotes for %s%s\n\n", chalk.Green, s.Alias, chalk.Reset)
+	//fmt.Printf("☔\t%sNotes for %s%s\n\n", chalk.Green, s.Alias, chalk.Reset)
+	handleStatus(fmt.Sprintf("Notes for %s:", s.Alias))
 	fmt.Println(s.Notes)
 }

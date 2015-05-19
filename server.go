@@ -33,13 +33,25 @@ func (s Server) ssh() {
 
 	success := s.sshStartProcess()
 	for success == false {
-		fmt.Println("Unusual termination, reconnecting.")
+		handleWarning(fmt.Errorf("Unusual termination, reconnecting. Press Ctrl+C to abort."))
 		time.Sleep(3000 * time.Millisecond)
 		success = s.sshStartProcess()
 	}
 }
 
 func (s Server) sshStartProcess() (success bool) {
+	/*
+		// TODO: use os.exec?
+		ssh, err := exec.LookPath("ssh")
+		handleError(err)
+
+		args := []string{"-p " + s.port, s.Hostname}
+		cmd := exec.Command(ssh, args...)
+		cmd.Start()
+		err = cmd.Wait()
+		handleError(err)
+		return err == nil
+	*/
 	cwd, err := os.Getwd()
 	handleError(err)
 
@@ -51,7 +63,7 @@ func (s Server) sshStartProcess() (success bool) {
 	ssh, err := exec.LookPath("ssh")
 	handleError(err)
 
-	args := []string{"", "-p " + s.port, s.Hostname}
+	args := []string{ssh, "-p " + s.port, s.Hostname}
 	proc, err := os.StartProcess(ssh, args, &pa)
 	handleError(err)
 
@@ -63,9 +75,6 @@ func (s Server) sshStartProcess() (success bool) {
 	// TODO: is there not a way to get the return code as an int?
 	if state.String() == "exit status 127" || state.String() == "exit status 130" {
 		return true
-	} /*else if !state.Success() {
-		fmt.Printf("WARNING: %s. \n", state.String())
-	}*/
-
+	}
 	return state.Success()
 }
