@@ -32,6 +32,7 @@ func usage() {
 	fmt.Println("  ssh <alias>")
 	fmt.Println("  add [alias] [root@][hostname][:22]")
 	fmt.Println("  note <alias>")
+	fmt.Println("  search <alias|hostname|notes>")
 	fmt.Println("  delete <alias>")
 	fmt.Println("  help")
 	fmt.Println()
