@@ -9,8 +9,9 @@ Commands:
   ssh <alias>
   add [alias] [root@][hostname][:22]
   note <alias>
+  search <alias|hostname|notes>
   delete <alias>
   help
 
-Report bugs at http://gitrex.com/patl/rain/issues.
+Report bugs at http://github.com/trashcan/rain/issues.
 ```
