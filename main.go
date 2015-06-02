@@ -157,29 +157,27 @@ func cmdNote(alias string) {
 }
 
 func openEditor(notes string) (newNote string) {
+	// Create a tempfile
 	file, err := ioutil.TempFile(os.TempDir(), "rain")
 	handleError(err)
+	// Delete it when done.
 	defer os.Remove(file.Name())
 
+	// Write the current notes into the file
 	err = ioutil.WriteFile(file.Name(), []byte(notes), 0644)
 	handleError(err)
 
-	cwd, err := os.Getwd()
+	// Launch vim to edit the notes
+	cmd := exec.Command("vim", []string{file.Name()}...)
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+	cmd.Stdin = os.Stdin
+	err = cmd.Start()
+	handleError(err)
+	err = cmd.Wait()
 	handleError(err)
 
-	pa := os.ProcAttr{
-		Files: []*os.File{os.Stdin, os.Stdout, os.Stderr},
-		Dir:   cwd,
-	}
-	vim, err := exec.LookPath("vim")
-	handleError(err)
-
-	proc, err := os.StartProcess(vim, []string{"", file.Name()}, &pa)
-	handleError(err)
-
-	_, err = proc.Wait()
-	handleError(err)
-
+	// Read the updated notes
 	newNoteByte, err := ioutil.ReadFile(file.Name())
 	handleError(err)
 
