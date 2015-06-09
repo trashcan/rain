@@ -9,13 +9,13 @@ func TestDB(t *testing.T) {
 	s := Server{Alias: "myalias", Hostname: "myhostname", Notes: "mynotes"}
 	dbw := DBWrapper{}
 
-	fmt.Println("Testing adding a server.")
+    // Test adding a server
 	err := dbw.AddServer(s)
 	if err != nil {
 		t.Errorf("Failed to add a server to DB. err: %s\n", err.Error())
 	}
 
-	fmt.Println("Testing retrieving a server.")
+	//Test retrieving a server
 	r, err := dbw.GetServer(s.Alias)
 	if err != nil {
 		t.Errorf("Failed to get server from DB. err: %s\n", err.Error())
@@ -24,7 +24,7 @@ func TestDB(t *testing.T) {
 		t.Errorf("Retrieved wrong content from DB.\n")
 	}
 
-	fmt.Println("Testing searching for a server.")
+	// Test searching for a server
 	as, err := dbw.ServerSearch(s.Alias)
 	if err != nil {
 		t.Errorf("Failed to get server from DB. err: %s\n", err.Error())
@@ -36,7 +36,7 @@ func TestDB(t *testing.T) {
 		t.Errorf("Retrieved wrong content from DB searching by alias.\n")
 	}
 
-	fmt.Println("Testing updating a server.")
+	// Test updating a server
 	updated := Server{Alias: s.Alias, Hostname: "updated-hostname", Notes: "update-notes"}
 	err = dbw.UpdateServer(updated)
 	if err != nil {
@@ -50,7 +50,7 @@ func TestDB(t *testing.T) {
 		t.Errorf("Updated server did not retrieve with the same values.\n")
 	}
 
-	fmt.Println("Testing deleting a server.")
+	// Test deleting a server
 	err = dbw.DeleteServer(s.Alias)
 	if err != nil {
 		t.Errorf("Failed to remove a server from DB. err: %s\n", err.Error())
