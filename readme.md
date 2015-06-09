@@ -25,7 +25,7 @@ $ rain add router admin@192.168.1.1
 ☔	admin@192.168.1.1 added succesfully.
 ```
 
-After that, `rain ssh` will connect to the server. `router` is the friendly name that is passed to ssh.
+After that, `rain ssh` will connect to the server. `router` is the friendly name that is passed to the ssh subcommand.
 
 ```
 $ rain ssh router
@@ -77,6 +77,25 @@ Last login: Tue Jun  9 14:20:08 2015 from 10.16.1.75
 [pat@managed ~]$
 ```
 
+Notes
+-----
+Notes can be added to each saved server. The syntax is `rain note friendlyname`. This will open vim with the contents of any existing notes. These notes are searched also when using `rain search`, so it's helpful to add keywords into the notes.
+```
+$ rain search gitlab
+Alias     Hostname      Hits
+gitrex    gitrex.com    57
+```
+
+These notes will be shown at each login as well.
+```
+$ rain ssh gitrex
+☔	Connecting to gitrex.com.
+☔	Notes for gitrex:
+Gitrex Gitlab Server
+☔	Connected.
+[root@gitrex ~]#
+```
+
 Best search match connection
 ----------------------------
 If you `rain ssh` to a server that isn't in local database, but the name provided matches exactly one server as a substring, rain will automatically connect to that server.
@@ -89,6 +108,10 @@ $ rain ssh yaps
 Last login: Thu Jun  4 13:14:07 2015 from 10.16.1.96
 [root@phx1-yapsbuilder1 ~]#
 ```
+
+No match connection
+-------------------
+If no matches are found, rain will connect to the provided hostname. It will still auto-reconnect if the SSH connection drops.
 
 
 Suggestions/Bugs
