@@ -128,7 +128,7 @@ func cmdAdd() {
 	dbw := DBWrapper{}
 	err := dbw.AddServer(newServer)
 	handleError(err)
-	handleStatus(hostname + " added succesfully.")
+	handleStatus(hostname + " added successfully.")
 }
 
 func cmdList() {

@@ -22,7 +22,7 @@ Usage
 Hosts are saved with `rain add`.
 ```
 $ rain add router admin@192.168.1.1
-☔	admin@192.168.1.1 added succesfully.
+☔	admin@192.168.1.1 added successfully.
 ```
 
 After that, `rain ssh` will connect to the server. `router` is the friendly name that is passed to the ssh subcommand.
