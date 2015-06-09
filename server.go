@@ -51,7 +51,6 @@ func (s Server) sshStartProcess() (success bool) {
 	handleError(err)
 
 	err = cmd.Wait()
-	handleError(err)
 
 	// 127 is command not found
 	// 130 is ctrl+c
