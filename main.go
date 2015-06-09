@@ -14,12 +14,19 @@ import (
 	"github.com/ttacon/chalk"
 )
 
-// TODO: chalk doesn't check if the output supports color
-// TODO: (more correctly) support ssh options like port: user@port:22
-// TODO: parse and filter ssh -v to see when we are connected for slow logins.
+/* TODO:
+ * Detect non-terminal output and remove color. https://github.com/ttacon/chalk/issues/4
+ * More correctly support ssh options like port: user@port:22
+ * Parse and filter ssh -v to see when we are connected for slow logins.
+ * Recent history, maybe even rain last to login to last server.
+ * Configuration to disable unwanted features.
+ * Adding does not detect when it is overwriting an existing server.
+ * Smarter detection for typos in friendly name.
+ */
 
 func main() {
 	flag.Usage = usage
+	//chalk.DetectTerminal()
 	parseArgs()
 }
 
@@ -121,6 +128,7 @@ func cmdAdd() {
 	dbw := DBWrapper{}
 	err := dbw.AddServer(newServer)
 	handleError(err)
+	handleStatus(hostname + " added succesfully.")
 }
 
 func cmdList() {
