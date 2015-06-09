@@ -1,3 +1,5 @@
+Rain
+====
 Rain is a command line tool to store and categorize SSH hosts.
 
 ```
