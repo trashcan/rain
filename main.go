@@ -26,7 +26,7 @@ import (
 
 func main() {
 	flag.Usage = usage
-	//chalk.DetectTerminal()
+	chalk.DetectTerminal()
 	parseArgs()
 }
 
@@ -114,7 +114,7 @@ func cmdAdd() {
 		fmt.Print("Alias: ")
 		scanner.Scan()
 		alias = scanner.Text()
-		fmt.Print("Hostname ([user]@<hostname>:[port]): ")
+		fmt.Print("Hostname ([user]@<hostname>[:port]): ")
 		scanner.Scan()
 		hostname = scanner.Text()
 	}
@@ -213,7 +213,6 @@ func cmdSSH(alias string) {
 			return
 		}
 	} else {
-		//fmt.Printf("☔\tConnecting to %s.\n", s.Hostname)
 		handleStatus(fmt.Sprintf("Connecting to %s.", s.Hostname))
 		s.Hit++
 		dbw.UpdateServer(s)
@@ -236,11 +235,12 @@ func renderServers(servers []Server, highlight string) {
 
 	t := termtables.CreateTable()
 	t.Style = ts
-	// TODO FIXME: These are adding a blank line above the headers.
-	// t.AddHeaders("Alias", "Hostname", "Hits")
 	cb := chalk.Bold.TextStyle
 
+	// TODO FIXME: These are adding a blank line above the headers.
+	// t.AddHeaders("Alias", "Hostname", "Hits")
 	t.AddRow(cb("Alias"), cb("Hostname"), cb("Hits"))
+
 	for _, s := range servers {
 		if highlight != "" {
 			s.Alias = strings.Replace(s.Alias, highlight, fmt.Sprintf("%s%s%s", chalk.Green, highlight, chalk.Reset), 1)
@@ -249,11 +249,9 @@ func renderServers(servers []Server, highlight string) {
 		t.AddRow(s.Alias, s.Hostname, s.Hit)
 	}
 	fmt.Printf(t.Render())
-
 }
 
 func renderNotes(s Server) {
-	//fmt.Printf("☔\t%sNotes for %s%s\n\n", chalk.Green, s.Alias, chalk.Reset)
 	handleStatus(fmt.Sprintf("Notes for %s:", s.Alias))
 	fmt.Println(s.Notes)
 }
