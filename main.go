@@ -26,7 +26,7 @@ import (
 
 func main() {
 	flag.Usage = usage
-	chalk.DetectTerminal()
+	//chalk.DetectTerminal()
 	parseArgs()
 }
 
