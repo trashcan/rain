@@ -100,6 +100,15 @@ Last login: Tue Jun  9 14:20:08 2015 from 10.16.1.75
 [pat@managed ~]$
 ```
 
+Tab Completion
+---------------
+Press tab to autocomplete commands as well as hostnames.
+```
+$ rain ssh rpi<TAB>
+rpi  (pi@192.168.1.131:33)  rpi2  (192.168.1.46)
+```
+This currently works with bash and fish shell.
+
 Notes
 -----
 Notes can be added to each saved server. The syntax is `rain note friendlyname`. This will open vim with the contents of any existing notes. These notes are searched also when using `rain search`, so it's helpful to add keywords into the notes.
