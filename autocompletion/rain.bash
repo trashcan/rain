@@ -9,19 +9,15 @@ _rain()
 
     case "${prev}" in
         help)
-            COMPREPLY=""
             return 0
             ;;
         list)
-            COMPREPLY=""
             return 0
             ;;
         add)
-            COMPREPLY=""
             return 0
             ;;
         note)
-            
             return 0
             ;;
         ssh)
