@@ -18,6 +18,27 @@ Commands:
 Report bugs at http://github.com/trashcan/rain/issues.
 ```
 
+Installation
+============
+Make sure you have your `$gopath` set. For bash you might do something like this:
+```
+$ mkdir -p ~/go/bin
+$ echo "export GOPATH=~/go >> ~/.bashrc"
+$ echo "export PATH=$PATH:$GOPATH/bin" >> ~/.bashrc
+```
+
+For fish:
+```
+$ mkdir -p ~/go/bin
+$ echo "set -x GOPATH ~/go" >> ~/.config/fish/config.fish
+$ echo "set -x PATH ~/go/bin $PATH" >> ~/.config/fish/config.sh"
+```
+
+Then just use `go get` to retrieve rain:
+```
+$ go get github.com/trashcan/rain
+```
+
 Usage
 =====
 
