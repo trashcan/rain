@@ -18,6 +18,8 @@ _rain()
             return 0
             ;;
         note)
+            local servers=$(for x in `rain list | awk '{print $1}' | tail -n+2`; do echo ${x} ; done )
+            COMPREPLY=( $(compgen -W "${servers}" ${cur}) )
             return 0
             ;;
         ssh)
@@ -29,6 +31,8 @@ _rain()
             return 0
             ;;
         delete)
+            local servers=$(for x in `rain list | awk '{print $1}' | tail -n+2`; do echo ${x} ; done )
+            COMPREPLY=( $(compgen -W "${servers}" ${cur}) )
             return 0
             ;;
         help)
