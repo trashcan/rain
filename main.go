@@ -22,6 +22,8 @@ import (
  * Configuration to disable unwanted features.
  * Adding does not detect when it is overwriting an existing server.
  * Smarter detection for typos in friendly name.
+ * Add a flag for verbose/debug output
+ * Add a flag to prevent a stored auto run command from executing
  */
 
 func main() {
@@ -36,8 +38,8 @@ func usage() {
 
 	fmt.Println("Commands:")
 	fmt.Println("  list")
-	fmt.Println("  ssh <alias>")
-	fmt.Println("  add [alias] [root@][hostname][:22]")
+	fmt.Println("  ssh <alias> [command(s)]")
+	fmt.Println("  add [alias] [root@][hostname][:22] [command(s)]")
 	fmt.Println("  note <alias>")
 	fmt.Println("  search <alias|hostname|notes>")
 	fmt.Println("  delete <alias>")
@@ -63,6 +65,10 @@ func handleStatus(m string) {
 	fmt.Printf("☔\t%s%s%s\n", chalk.Green, m, chalk.Reset)
 }
 
+func handleDebug(m string) {
+	fmt.Printf("☔\t%s%s%s\n", chalk.Green, m, chalk.Reset)
+}
+
 func parseArgs() {
 	requireArgs(os.Args[0], 1)
 	args := os.Args[1:]
@@ -71,7 +77,7 @@ func parseArgs() {
 
 	case "ssh":
 		requireArgs("ssh", 2)
-		cmdSSH(args[1])
+		cmdSSH(args[1], strings.Join(args[2:], " "))
 	case "list":
 		cmdList()
 	case "add":
@@ -105,10 +111,11 @@ func requireArgs(cmd string, count int) {
 }
 
 func cmdAdd() {
-	var alias, hostname string
-	if len(os.Args) == 4 {
+	var alias, hostname, runcmd string
+	if len(os.Args) >= 4 {
 		alias = os.Args[2]
 		hostname = os.Args[3]
+		runcmd = ""
 	} else {
 		scanner := bufio.NewScanner(os.Stdin)
 		fmt.Print("Alias: ")
@@ -117,12 +124,17 @@ func cmdAdd() {
 		fmt.Print("Hostname ([user]@<hostname>[:port]): ")
 		scanner.Scan()
 		hostname = scanner.Text()
+		runcmd = ""
+	}
+	if len(os.Args) > 4 {
+		runcmd = strings.Join(os.Args[4:], " ")
 	}
 
 	newServer := Server{
 		Alias:    alias,
 		Hostname: hostname,
 		Notes:    string(""),
+		RunCmd:   runcmd,
 	}
 
 	dbw := DBWrapper{}
@@ -192,7 +204,7 @@ func openEditor(notes string) (newNote string) {
 	return string(newNoteByte)
 }
 
-func cmdSSH(alias string) {
+func cmdSSH(alias string, runcmd string) {
 	dbw := DBWrapper{}
 	s, err := dbw.GetServer(alias)
 	if err != nil {
@@ -217,6 +229,10 @@ func cmdSSH(alias string) {
 		s.Hit++
 		dbw.UpdateServer(s)
 	}
+	if len(runcmd) > 0 {
+		// A command was passed in to run on remote server, pass it through to ssh
+		s.RunCmd = runcmd
+	}
 	s.ssh()
 }
 
@@ -239,14 +255,14 @@ func renderServers(servers []Server, highlight string) {
 
 	// TODO FIXME: These are adding a blank line above the headers.
 	// t.AddHeaders("Alias", "Hostname", "Hits")
-	t.AddRow(cb("Alias"), cb("Hostname"), cb("Hits"))
+	t.AddRow(cb("Alias"), cb("Hostname"), cb("AutoRun Cmd"), cb("Hits"))
 
 	for _, s := range servers {
 		if highlight != "" {
 			s.Alias = strings.Replace(s.Alias, highlight, fmt.Sprintf("%s%s%s", chalk.Green, highlight, chalk.Reset), 1)
 			s.Hostname = strings.Replace(s.Hostname, highlight, fmt.Sprintf("%s%s%s", chalk.Green, highlight, chalk.Reset), 1)
 		}
-		t.AddRow(s.Alias, s.Hostname, s.Hit)
+		t.AddRow(s.Alias, s.Hostname, s.RunCmd, s.Hit)
 	}
 	fmt.Printf(t.Render())
 }

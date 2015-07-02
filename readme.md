@@ -56,6 +56,15 @@ $ rain ssh router
 Last login: Tue Jun  9 14:05:22 2015 from 192.168.1.131
 ```
 
+You can also run ad-hoc commands on the remote server by appending the command or commands after the hostname.
+
+```
+$ rain ssh router echo hello world
+☔	Connecting to admin@192.168.1.1.
+hello world
+Connection to admin@192.168.1.1 closed.
+```
+
 All of the stored hosts can be listed with `rain list`.
 
 ```
