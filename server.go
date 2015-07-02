@@ -16,6 +16,7 @@ type Server struct {
 	Tags     []string
 	Hit      int
 	port     string
+	RunCmd   string
 }
 
 func (s Server) ssh() {
@@ -41,7 +42,13 @@ func (s Server) ssh() {
 
 func (s Server) sshStartProcess() (success bool) {
 	args := []string{"-p " + s.port, s.Hostname}
+	if len(s.RunCmd) > 0 {
+		// we have a command to run once we connect, so append it to the args we're sending ssh
+		// specify -t to require a tty (just in case, for tmux/screen/etc)
+		args = append(args, "-t", "--", s.RunCmd)
+	}
 
+	handleDebug(fmt.Sprintf("running ssh %s", args))
 	cmd := exec.Command("ssh", args...)
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
