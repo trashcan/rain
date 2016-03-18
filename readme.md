@@ -22,17 +22,17 @@ Installation
 ============
 Make sure you have your `$gopath` set. For bash you might do something like this:
 ```
-$ mkdir -p ~/go/src
-$ echo "export GOPATH=~/go" >> ~/.bashrc
-$ echo "export PATH=$PATH:$GOPATH/bin" >> ~/.bashrc
+$ mkdir -p ~/go/src ~/go/bin
+$ echo 'export GOPATH=~/go' >> ~/.bashrc
+$ echo 'export PATH=$PATH:$GOPATH/bin' >> ~/.bashrc
 $ source ~/.bashrc
 ```
 
 For fish:
 ```
-$ mkdir -p ~/go/bin
+$ mkdir -p ~/go/src ~/go/bin
 $ echo "set -x GOPATH ~/go" >> ~/.config/fish/config.fish
-$ echo "set -x PATH ~/go/bin $PATH" >> ~/.config/fish/config.sh
+$ echo "set -x PATH ~/go/bin $PATH" >> ~/.config/fish/config.fish
 ```
 
 Then just use `go get` to retrieve rain:
