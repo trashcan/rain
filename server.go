@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"os/exec"
@@ -50,11 +51,31 @@ func (s Server) sshStartProcess() (success bool) {
 
 	handleDebug(fmt.Sprintf("running ssh %s", args))
 	cmd := exec.Command("ssh", args...)
-	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	cmd.Stdin = os.Stdin
 
-	err := cmd.Start()
+	cmdReader, err := cmd.StderrPipe()
+	handleError(err)
+
+	// First attempt at monitoring connection status.
+	scanner := bufio.NewScanner(cmdReader)
+	go func() {
+		connected := false
+		loggedin := false
+		for scanner.Scan() {
+			stderr := scanner.Text()
+			if !connected && strings.Contains(stderr, "Connection established") {
+				connected = true
+				handleStatus("Connected.")
+			} else if !loggedin && strings.Contains(stderr, "Entering interactive session") {
+				loggedin = true
+			} else if loggedin && !strings.Contains(stderr, "debug") {
+				cmd.Stderr = os.Stderr
+			}
+		}
+	}()
+
+	err = cmd.Start()
 	handleError(err)
 
 	err = cmd.Wait()
