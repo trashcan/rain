@@ -25,9 +25,8 @@ func (dbw DBWrapper) connect() (db *bolt.DB) {
 	handleError(err)
 
 	err = db.Update(func(tx *bolt.Tx) error {
-		_, err := tx.CreateBucketIfNotExists([]byte("servers"))
-		handleError(err)
-		return err
+		_, err2 := tx.CreateBucketIfNotExists([]byte("servers"))
+		return err2
 	})
 
 	handleError(err)
@@ -47,7 +46,8 @@ func (dbw DBWrapper) DeleteServer(alias string) (err error) {
 	err = bdb.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("servers"))
 		//TODO: check if key exists first
-		err := b.Delete([]byte(alias))
+		err2 := b.Delete([]byte(alias))
+		handleError(err2)
 		return err
 	})
 	handleError(err)
@@ -63,11 +63,11 @@ func (dbw DBWrapper) AddServer(s Server) (err error) {
 		b := tx.Bucket([]byte("servers"))
 		handleError(err)
 
-		encoded, err := json.Marshal(s)
-		handleError(err)
+		encoded, err2 := json.Marshal(s)
+		handleError(err2)
 
-		err = b.Put([]byte(s.Alias), encoded)
-		return err
+		err2 = b.Put([]byte(s.Alias), encoded)
+		return err2
 	})
 
 	handleError(err)
@@ -91,9 +91,9 @@ func (dbw DBWrapper) ServerSearch(search string) (servers []Server, err error) {
 			searchL := strings.ToLower(search)
 			aliasL := strings.ToLower(string(alias))
 			hostL := strings.ToLower(s.Hostname)
-			notesL := strings.ToLower(s.Notes)
+			//notesL := strings.ToLower(s.Notes)
 
-			if strings.Contains(aliasL, searchL) || strings.Contains(hostL, searchL) || strings.Contains(notesL, searchL) {
+			if strings.Contains(aliasL, searchL) || strings.Contains(hostL, searchL) {
 				servers = append(servers, s)
 			}
 		}
@@ -113,11 +113,11 @@ func (dbw DBWrapper) AllServers() (servers []Server, err error) {
 
 		for k, v := c.First(); k != nil; k, v = c.Next() {
 			var s Server
-			err := json.Unmarshal(v, &s)
-			handleError(err)
+			err2 := json.Unmarshal(v, &s)
+			handleError(err2)
 			servers = append(servers, s)
 		}
-		return nil
+		return err
 	})
 	handleError(err)
 	return

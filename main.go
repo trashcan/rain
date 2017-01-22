@@ -5,9 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
-	"os/exec"
 	"strings"
 
 	"github.com/apcera/termtables"
@@ -40,8 +38,7 @@ func usage() {
 	fmt.Println("  list")
 	fmt.Println("  ssh <alias> [command(s)]")
 	fmt.Println("  add [alias] [root@][hostname][:22] [command(s)]")
-	fmt.Println("  note <alias>")
-	fmt.Println("  search <alias|hostname|notes>")
+	fmt.Println("  search <alias|hostname|notes> [command(s)]")
 	fmt.Println("  delete <alias>")
 	fmt.Println("  help")
 	fmt.Println()
@@ -87,13 +84,7 @@ func parseArgs() {
 		cmdDelete(args[1])
 	case "search":
 		requireArgs("search", 2)
-		cmdSearch(args[1])
-	case "note":
-		requireArgs("note", 2)
-		cmdNote(args[1])
-	case "edit":
-		requireArgs("note", 2)
-		cmdNote(args[1])
+		cmdSearch(args[1], strings.Join(args[2:], " "))
 	case "help":
 		flag.Usage()
 	default:
@@ -133,7 +124,6 @@ func cmdAdd() {
 	newServer := Server{
 		Alias:    alias,
 		Hostname: hostname,
-		Notes:    string(""),
 		RunCmd:   runcmd,
 	}
 
@@ -156,52 +146,19 @@ func cmdDelete(alias string) {
 	handleError(err)
 }
 
-func cmdSearch(search string) {
+func cmdSearch(search string, runcmd string) {
+
 	dbw := DBWrapper{}
 	servers, err := dbw.ServerSearch(search)
 	handleError(err)
-	renderServers(servers, search)
-}
 
-func cmdNote(alias string) {
-	dbw := DBWrapper{}
-	s, err := dbw.GetServer(alias)
-	handleError(err)
-
-	newNote := openEditor(s.Notes)
-	if s.Notes != string(newNote) {
-		s.Notes = newNote
-		err = dbw.UpdateServer(s)
-		handleError(err)
+	if len(runcmd) > 0 {
+		for _, s := range servers {
+			cmdSSH(s.Alias, runcmd)
+		}
+	} else {
+		renderServers(servers, search)
 	}
-}
-
-func openEditor(notes string) (newNote string) {
-	// Create a tempfile
-	file, err := ioutil.TempFile(os.TempDir(), "rain")
-	handleError(err)
-	// Delete it when done.
-	defer os.Remove(file.Name())
-
-	// Write the current notes into the file
-	err = ioutil.WriteFile(file.Name(), []byte(notes), 0644)
-	handleError(err)
-
-	// Launch vim to edit the notes
-	cmd := exec.Command("vim", []string{file.Name()}...)
-	cmd.Stderr = os.Stderr
-	cmd.Stdout = os.Stdout
-	cmd.Stdin = os.Stdin
-	err = cmd.Start()
-	handleError(err)
-	err = cmd.Wait()
-	handleError(err)
-
-	// Read the updated notes
-	newNoteByte, err := ioutil.ReadFile(file.Name())
-	handleError(err)
-
-	return string(newNoteByte)
 }
 
 func cmdSSH(alias string, runcmd string) {
@@ -225,13 +182,14 @@ func cmdSSH(alias string, runcmd string) {
 			return
 		}
 	} else {
-		handleStatus(fmt.Sprintf("Connecting to %s.", s.Hostname))
+		//handleStatus(fmt.Sprintf("Connecting to %s.", s.Hostname))
 		s.Hit++
 		dbw.UpdateServer(s)
 	}
 	if len(runcmd) > 0 {
 		// A command was passed in to run on remote server, pass it through to ssh
 		s.RunCmd = runcmd
+		fmt.Print(alias + ": ")
 	}
 	s.ssh()
 }
@@ -265,9 +223,4 @@ func renderServers(servers []Server, highlight string) {
 		t.AddRow(s.Alias, s.Hostname, s.RunCmd, s.Hit)
 	}
 	fmt.Printf(t.Render())
-}
-
-func renderNotes(s Server) {
-	handleStatus(fmt.Sprintf("Notes for %s:", s.Alias))
-	fmt.Println(s.Notes)
 }

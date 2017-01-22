@@ -17,12 +17,13 @@ type Server struct {
 	Hit      int
 	port     string
 	RunCmd   string
+	Username string
 }
 
 func (s Server) ssh() {
-	if s.Notes != "" {
+	/*if s.Notes != "" {
 		renderNotes(s)
-	}
+	}*/
 
 	// TODO: this parsing should probably be done at time of server add.
 	s.port = "22"
@@ -48,7 +49,7 @@ func (s Server) sshStartProcess() (success bool) {
 		args = append(args, "-t", "--", s.RunCmd)
 	}
 
-	handleDebug(fmt.Sprintf("running ssh %s", args))
+	//handleDebug(fmt.Sprintf("running ssh %s", args))
 	cmd := exec.Command("ssh", args...)
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
@@ -57,7 +58,8 @@ func (s Server) sshStartProcess() (success bool) {
 	err := cmd.Start()
 	handleError(err)
 
-	err = cmd.Wait()
+	err2 := cmd.Wait()
+	handleError(err2)
 
 	// 127 is command not found
 	// 130 is ctrl+c
